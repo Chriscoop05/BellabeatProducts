@@ -1,0 +1,107 @@
+### Weight Stats 
+
+Here, let's peer into some of the specific trends and observations we can make behind the weight metrics of our fitbit data. 
+
+
+# Read CSV for Weight 
+Weight_April = read.csv("/kaggle/input/fitbit/mturkfitbit_export_3.12.16-4.11.16/Fitabase Data 3.12.16-4.11.16/weightLogInfo_merged.csv")
+Weight_May = read.csv("/kaggle/input/fitbit/mturkfitbit_export_4.12.16-5.12.16/Fitabase Data 4.12.16-5.12.16/weightLogInfo_merged.csv")
+#Merge April and May datasets into one using rbind
+Merged_Weight = rbind(Weight_April, Weight_May)
+
+
+Merged_Weight = Merged_Weight %>% 
+  select(Id, Date, WeightKg, WeightPounds, BMI, IsManualReport) %>% 
+  group_by(Id)
+Merged_Weight = merge(Merged_Weight, Merged_Daily, by = 'Id')
+
+
+Visualize some of the data on a scatterplot to see how weight and daily activity relate.
+
+A disclaimer before proceeding ahead is worth noting that the sample size is still relatively small for
+what it should be to arrive at a concrete conclusion - it is recommended to repeat this research with a greater pool of 
+participants. 
+
+
+
+pounds_steps = Merged_Weight %>% 
+  group_by(Id) %>% 
+  select(Id, Date, WeightPounds, TotalSteps) %>% 
+  summarise(mean_steps = mean(TotalSteps),
+            mean_pounds = mean(WeightPounds))
+
+#Pounds vs Steps Scatter plot 
+ggplot(pounds_steps, aes( x = mean_pounds, y = mean_steps))+
+  geom_point()+
+  theme_bw()+
+  xlim(0,300)+
+  ylim(0,18000)+
+  ggtitle("Pounds vs Sedentary Mins")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Pounds in relation to Total Distance 
+Merged_Weight %>% 
+  group_by(Id) %>% 
+  summarize(
+    mean_pounds = mean(WeightPounds),
+    mean_dist = mean(TotalDistance)
+  ) %>% 
+  ggplot(aes(x = mean_pounds, y = mean_dist))+
+    geom_point()+
+    theme_bw()+
+    ggtitle("Pounds vs Distance")+
+    theme(plot.title = element_text(hjust = 0.5))
+
+#Pounds in relation to sedentary minutes 
+Merged_Weight %>% 
+  group_by(Id) %>% 
+  summarize(
+    mean_pounds = mean(WeightPounds),
+    mean_sedentary = mean(SedentaryMinutes)
+  ) %>% 
+  ggplot(aes(x = mean_pounds, y = mean_sedentary))+
+    geom_point()+
+    theme_bw()+
+    ggtitle("Pounds vs Sedentary Mins")+
+    theme(plot.title = element_text(hjust = 0.5))
+
+
+
+We can also peer into the statistical distribution of the participants' BMI to see gauge which demographic 
+is using the product:
+
+
+bmi_iqr = round(IQR(Merged_Weight$BMI),3)
+bmi_var = round(var(Merged_Weight$BMI),3)
+bmi_sd = round(sd(Merged_Weight$BMI),3)
+bmi_avg = round(mean(Merged_Weight$BMI),3)
+bmi_med = round(median(Merged_Weight$BMI),3)
+
+sprintf("Variance of BMI is: %f", bmi_var)
+sprintf("Standard Deviation of BMI is: %f",bmi_sd)
+sprintf("The mean BMI is: %f", bmi_avg)
+sprintf("The range of values between the 25th percentile and 75 percentile of BMI is: %f", 
+      bmi_iqr)
+sprintf("The 50th percentile of BMI is: %f",bmi_med)
+round(fivenum(Merged_Weight$BMI),3)
+
+
+From the small sample size of participants that is available we can see:
+
+* The higher the weight, the fewer steps and distance a participant is bound to walk
+
+* Weight and sedentary minutes are not correlated 
+
+* The difference between the 25th and 75th percentile of participants' BMI is 1.59
+
+* The median BMI is 24.39 and the average is 25.32 
+
+
+
+
+
+
+
+
+
+
