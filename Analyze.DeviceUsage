@@ -1,0 +1,194 @@
+In this section, the data is observed in terms of how many times the Id of each participant is logged in for a given day, 
+hour, or minute of the day. 
+This section will gain insight into how the company should advertise its device's usefulness and application. 
+
+#Count how many times in daily activity that the users logged on to use device 
+Daily_use = Merged_Daily %>% 
+  group_by(Id) %>% 
+  summarize(DaysUsed = sum(n())) %>% 
+  mutate(usage_label = cut(DaysUsed, 
+                           breaks = c(1, 20, 40, 70), 
+                           labels = c("low usage",
+                                      "moderate usage",
+                                      "high usage")))
+
+
+
+#Pie chart of daily device usage 
+Daily_use %>% 
+  group_by(usage_label) %>% 
+  summarise(usage_count = round(n()/35,3)) %>% 
+  mutate(labels = c("5.7%", "31.4%", "62.9%")) %>% 
+  ggplot(aes( x= "", y = usage_count, fill = labels))+
+    geom_col(color = 'black')+
+    coord_polar(theta = "y",start = 0 )+
+    geom_text(aes(label = labels),
+              position = position_stack(vjust = 0.5))+
+  theme_void()+
+  scale_fill_manual(values = c("cadetblue", "cadetblue1", "cadetblue2"),
+                    labels = c("Low usage: 1-20 days", 
+                               "Moderate usage: 20-40 days",
+                               "High usage: 40+ days"))+
+  ggtitle("Daily Smart Device Usage")+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+
+Many participants are using their smart devices a lot throughout the time period. 
+63% of participants are using it in high usage while 31% use the smart device in low usage. 
+
+
+
+#Minutes of usage per day
+Merged_Usage = merge(Daily_use, Merged_Daily, by = "Id")
+
+#Total Minutes worn
+daily_usage_mins = Merged_Usage %>% 
+  mutate(total_mins_used = VeryActiveMinutes + 
+         FairlyActiveMinutes +
+         LightlyActiveMinutes + 
+         SedentaryMinutes) %>% 
+  mutate(percent_mins_used = total_mins_used/1440) %>% 
+  mutate(usage_label = case_when(
+    percent_mins_used == 1 ~ "Whole Day",
+    percent_mins_used <1 & percent_mins_used >= .50 ~ "Most Day",
+    percent_mins_used <.50 ~ "Sometimes"
+  ))
+
+
+
+
+#Count how many of each usage type per day there are so we can plot it on a pie chart
+daily_usage_mins %>% 
+  group_by(usage_label) %>% 
+  summarise(frequency_use = n()) %>% 
+  mutate(total = sum(frequency_use)) %>% 
+  group_by(usage_label) %>% 
+  summarise(percent_use = frequency_use/total) %>% 
+  mutate(pie_label = percent(percent_use)) %>% 
+  ggplot(aes(x = "", y = percent_use, fill = usage_label))+
+    geom_col(color = 'black')+
+    coord_polar(theta = "y", start = 0)+
+    theme_void()+
+    theme(
+      plot.title = element_text(hjust = 0.5),
+      panel.background = element_blank(),
+      panel.border = element_blank()
+    )+
+    scale_fill_manual(values = c("chartreuse1", "chartreuse2", "chartreuse3"))+
+  geom_text(aes(label = pie_label),
+            position = position_stack(vjust = 0.5), size = 3.5)+
+  ggtitle("Percentage of smart device usage daily")
+
+
+
+In terms of daily usage quantities, 96% of the participants are using their device either most of the day or the entire day,
+while only 3.9% are using it in low amounts per day. 
+
+Let's now group each usage rate from the prior pie chart to daily usage participant labels and see how high usage, 
+moderate usage, and low usage Id members are using their devices on a daily basis.
+
+
+#Merges the two columns with the main usage dataframe 
+
+Merged_Usage= cbind(Merged_Usage, daily_usage_mins$percent_mins_used)
+Merged_Usage = cbind(Merged_Usage, daily_usage_mins$total_mins_used)
+Merged_Usage = cbind(Merged_Usage, daily_usage_mins$usage_label)
+
+#Changes the column names of the merged data frame
+colnames(Merged_Usage)[18:20] = c("percent_mins_used", "total_mins_used", "usage_label_mins")
+
+#Pie charts and dataframes for every type of usage there is
+
+
+high_use = Merged_Usage %>% 
+  filter(usage_label == "high usage") %>% 
+  group_by(usage_label_mins) %>% 
+  summarise(frequency_use = n()) %>% 
+  mutate(total = sum(frequency_use)) %>% 
+  group_by(usage_label_mins) %>% 
+  summarise(percent_use = frequency_use/total) %>% 
+  mutate(pie_label = percent(percent_use))
+
+moderate_use = Merged_Usage %>% 
+  filter(usage_label == "moderate usage") %>% 
+  group_by(usage_label_mins) %>% 
+  summarise(frequency_use = n()) %>% 
+  mutate(total = sum(frequency_use)) %>% 
+  group_by(usage_label_mins) %>% 
+  summarise(percent_use = frequency_use/total) %>% 
+  mutate(pie_label = percent(percent_use))
+
+low_use = Merged_Usage %>% 
+  filter(usage_label == "low usage") %>% 
+  group_by(usage_label_mins) %>% 
+  summarise(frequency_use = n()) %>% 
+  mutate(total = sum(frequency_use)) %>% 
+  group_by(usage_label_mins) %>% 
+  summarise(percent_use = frequency_use/total) %>% 
+  mutate(pie_label = percent(percent_use))
+
+
+#High usage pie chart 
+ggplot(high_use, aes(x = "", y = percent_use, fill = usage_label_mins))+
+  geom_col(color = 'black')+
+  coord_polar(theta = "y", start = 0)+
+  theme_void()+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_blank(),
+    panel.border = element_blank()
+  )+
+  scale_fill_manual(values = c("chartreuse1", "chartreuse2", "chartreuse3"))+
+  geom_text(aes(label = pie_label),
+            position = position_stack(vjust = 0.5), size = 3.5)+
+  ggtitle("High Usage users: daily smart device trends")
+
+#Moderate usage pie chart 
+ggplot(moderate_use, aes(x = "", y = percent_use, fill = usage_label_mins))+
+  geom_col(color = 'black')+
+  coord_polar(theta = "y", start = 0)+
+  theme_void()+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_blank(),
+    panel.border = element_blank()
+  )+
+  scale_fill_manual(values = c("chartreuse1", "chartreuse2", "chartreuse3"))+
+  geom_text(aes(label = pie_label),
+            position = position_stack(vjust = 0.5), size = 3.5)+
+  ggtitle("Moderate Usage users: daily smart device trends")
+
+#Low usage pie chart 
+ggplot(low_use, aes(x = "", y = percent_use, fill = usage_label_mins))+
+  geom_col(color = 'black')+
+  coord_polar(theta = "y", start = 0)+
+  theme_void()+
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    panel.background = element_blank(),
+    panel.border = element_blank()
+  )+
+  scale_fill_manual(values = c("chartreuse1", "chartreuse2", "chartreuse3"))+
+  geom_text(aes(label = pie_label),
+            position = position_stack(vjust = 0.5), size = 3.5)+
+  ggtitle("Low Usage users: daily smart device trends")
+
+
+
+
+From here we observe:
+
+* 96% of high usage users have their smart devices in use for either most of the day or the entire day, with users using it the entire day edging the other slices out.
+
+* 97% of moderate usage users have their smart devices in use for either most of the day or the entire day, with users in the entire day slice edging out the others.
+
+* 94% of low usage users either use their device most of the day or the entire day - with 88% of them using it during the whole day.
+
+
+
+
+
+
+
+
