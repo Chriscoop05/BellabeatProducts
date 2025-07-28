@@ -1,0 +1,89 @@
+### Hourly Calorie Data
+
+This is the dataset that contains information about how many calories users were burning at specific hours of the day. 
+The ActivityTime column marks the calendar dates and time in MDY-HMS format. 
+This will require using the lubridate package in the tidyverse tools to parse through in order to collect information about the 
+data with relation to the date/time of day. 
+
+
+This linegraph will show how many calories are burned throughout the day by the hour.
+
+Additionally, there is a column chart that represents the calorie sums for each hour of the day to depict the same thing in
+column format to visualize the distribution a little better. 
+
+
+#Merge the hourly calorie datasets 
+Merged_HourCal = rbind(hourlyCalories_April, hourlyCalories_May)
+
+
+#Plots how many calories are burned by time of day
+Merged_HourCal %>% 
+  mutate(Hour = hour(mdy_hms(Merged_HourCal$ActivityHour))) %>% 
+  group_by(Hour) %>% 
+  summarise(sum_cal = sum(Calories)) %>% 
+  ggplot(aes(x = Hour, y = sum_cal))+
+    geom_line()+
+    theme_bw()
+
+
+
+There is a huge spike in calorie burning starting early in the morning at 6am and keeps spiking until the afternoon. 
+It takes a brief plummet but then rises up starting at 3pm until 8pm, in which there is another steep dive in calorie burning.
+
+Overall, most activities are mid day. 
+
+
+
+Merged_HourCal %>% 
+  mutate(ActivityHour = parse_date_time(ActivityHour, "%m/%d/%Y %I:%M:%S %p"),
+         Hour = format(ActivityHour, format = "%H")) %>% 
+  group_by(Hour) %>% 
+  summarise(
+    sum_cal = sum(Calories)
+  ) %>% 
+  ggplot(aes(x = Hour, y = sum_cal))+
+    geom_col(fill = 'blue', color = 'white')+
+    theme_bw()+
+    ggtitle("Calorie Burn Distribution By Hour")+
+    ylab("Calories Burnt")+
+    theme(plot.title = element_text(hjust = 0.5))
+
+
+Make the dataset that will allow us to see how many calories are burned over each day of the week to display any possible 
+relationship. 
+
+
+
+weekday_hr_cal = Merged_HourCal %>% 
+  rename(Date = ActivityHour) %>% 
+  mutate(Date = as.Date(Date, format = "%m/%d/%Y"),
+         Weekday = weekdays(Date)) %>% 
+  group_by(Weekday) %>% 
+  summarise(avg_cal = mean(Calories)) 
+
+#Distribution by day of the week (this plot and the one below are the same)
+weekday_hr_cal %>% 
+  mutate(Weekday = 
+           factor(Weekday, levels = c('Monday', 'Tuesday','Wednesday', 
+                                      'Thursday', 'Friday', 'Saturday','Sunday'))) %>% 
+  ggplot(aes(x = Weekday, y = avg_cal))+
+  geom_col(fill = 'brown4')+
+  theme_bw()+
+  ggtitle("Average calories lost per weekday") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#y-axis scaled to 75-100 
+weekday_hr_cal %>% 
+  mutate(Weekday = 
+           factor(Weekday, levels = c('Monday', 'Tuesday','Wednesday', 
+                                      'Thursday', 'Friday', 'Saturday','Sunday'))) %>% 
+  ggplot(aes(x = Weekday, y = avg_cal))+
+    geom_col(fill = 'brown4')+
+  theme_bw()+
+  ggtitle("Average calories lost per weekday") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  coord_cartesian(ylim = c(75,100))
+
+
+Upon closer inspection of the zoomed in diagram, most calories lost per weekday occur on Saturday and then they take a deep 
+dive from Sunday to Monday. 
