@@ -1,0 +1,299 @@
+Analyze The Data
+
+#Sums up metrics in each column per ID member so we can look at distributions
+total_sums_daily = Merged_Daily %>% 
+  select(Id, TotalSteps, TotalDistance, VeryActiveDistance, ModeratelyActiveDistance, 
+         LightActiveDistance, VeryActiveMinutes, FairlyActiveMinutes, LightlyActiveMinutes, SedentaryMinutes,
+         Calories) %>% 
+  group_by(Id) %>% 
+  summarise(sum_steps = sum(TotalSteps),
+            sum_total_distance = sum(TotalDistance),
+            sum_vactive_dist = sum(VeryActiveDistance),
+            sum_mactive_dist = sum(ModeratelyActiveDistance),
+            sum_lactive_dist = sum(LightActiveDistance),
+            sum_vactive_mins = sum(VeryActiveMinutes),
+            sum_factive_mins = sum(FairlyActiveMinutes),
+            sum_lactive_mins = sum(LightlyActiveMinutes),
+            sum_sedentary_mins = sum(SedentaryMinutes),
+            sum_cal = sum(Calories))
+
+
+##Histograms
+
+
+# Histogram of total steps 
+ggplot(total_sums_daily, aes(x = sum_steps)) +
+  geom_histogram(binwidth = 50000, color = 'white', fill = 'blue')+
+  theme_bw()+
+  ggtitle("Distribution of total steps taken") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("People")+
+  xlab("Total Steps")+
+  scale_x_continuous(labels = scales::comma)
+
+# Histogram of total distance 
+
+ggplot(total_sums_daily, aes(x = sum_total_distance)) +
+  geom_histogram(binwidth = 50, color = 'white', fill = 'red')+
+  theme_bw()+
+  ggtitle("Distribution of total steps taken") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("People")+
+  xlab("Total Distance")
+
+#Histogram of sedentary minutes 
+ggplot(total_sums_daily, aes(x = sum_sedentary_mins)) +
+  geom_histogram(binwidth = 10000, color = 'white', fill = 'black')+
+  theme_bw()+
+  ggtitle("Distribution of total Sedentary Minutes") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("People")+
+  xlab("Total Sedentary Mins")+
+  scale_x_continuous(labels = scales::comma)
+
+#Histogram of calories 
+
+ggplot(total_sums_daily, aes(x = sum_cal)) +
+  geom_histogram(binwidth = 25000, color = 'white', fill = 'orange')+
+  theme_bw()+
+  ggtitle("Distribution of Total Calories ") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("People")+
+  xlab("Total Calories")+
+  scale_x_continuous(labels = scales::comma)
+
+
+
+library(stats)
+
+summary(total_sums_daily$sum_steps)
+summary(total_sums_daily$sum_total_distance)
+summary(total_sums_daily$sum_sedentary_mins)
+summary(total_sums_daily$sum_cal)
+
+
+* Most participants had within 200,000 to 350,000 steps in the two month period
+
+* The distance (measured in kilometers) was centered around 200 km with very few participants measuring past 400 km
+
+* Sedentary Minutes were distributed mainly between 30,000 - 50,000 with little variance 
+
+* Most participants burned between 75,000 and 125,000 calories with little variance past that range
+
+
+
+Avg_Merged_Daily = Merged_Daily %>% 
+  group_by(Id) %>% 
+  summarise(
+    avg_total_steps = mean(TotalSteps),
+    avg_total_dist = mean(TotalDistance),
+    avg_sedentary = mean(SedentaryMinutes),
+    avg_calories = mean(Calories)
+  )
+
+#Histogram of avg daily distance
+ggplot(Avg_Merged_Daily ,aes(x = avg_total_dist))+
+  geom_histogram(binwidth = 2 ,fill = 'deepskyblue', color = 'black')+
+  theme_bw()+
+  ggtitle("Average Daily Distance Distribution")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("Average Daily Distance")
+
+#Histogram of avg daily steps
+ggplot(Avg_Merged_Daily ,aes(x = avg_total_steps))+
+  geom_histogram(binwidth = 2000 ,fill = 'deepskyblue2', color = 'black')+
+  theme_bw()+
+  ggtitle("Average Daily Steps Distribution")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("Average Daily Steps")
+
+#Histogram of avg daily sedentary Mins
+ggplot(Avg_Merged_Daily ,aes(x = avg_sedentary))+
+  geom_histogram(binwidth = 100 ,fill = 'deepskyblue3', color = 'black')+
+  theme_bw()+
+  ggtitle("Average Daily Sedentary Mins Distribution")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("Average Sedentary Mins")
+
+#Histogram of avg daily calories
+ggplot(Avg_Merged_Daily ,aes(x = avg_calories))+
+  geom_histogram(binwidth = 250 ,fill = 'deepskyblue4', color = 'black')+
+  theme_bw()+
+  ggtitle("Average Daily Calories Distribution")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("Average Daily Calories")
+
+
+
+
+
+
+
+##Pie Chart of distance 'type' 
+
+#Find column totals - total distance traveled from all participants
+total_sums_steps = total_sums_daily %>% 
+  summarise(overall_vactive_dist = as.numeric(round(sum(sum_vactive_dist)/sum(sum_total_distance),3)),
+            overall_mactive_dist = as.numeric(round(sum(sum_mactive_dist)/sum(sum_total_distance),3)),
+            overall_lactive_dist = as.numeric(round(sum(sum_lactive_dist)/sum(sum_total_distance), 3))) %>% 
+  mutate(overall_vactive_dist, overall_mactive_dist, overall_lactive_dist)
+
+#Make labels for pie chart
+labels_overall_steps = c("27% Very Active", "10% Moderately Active", "63% Lightly Active")
+
+
+#Go from wide data to narrow data so we can make pie chart with ggplot
+total_sums_steps = t(total_sums_steps)
+
+
+#Add Column names to the transposed data frame 
+col_names_overall_steps = c("Steps")
+colnames(total_sums_steps) = col_names_overall_steps
+
+#PIE SLICES AS PERCENTAGES OF TOTAL
+ggplot(total_sums_steps, aes(x = "", y = Steps, fill = Steps)) +
+  geom_col(color = "black") +
+  coord_polar(theta = "y")+
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.background = element_rect(fill = "#ebf2ff"),
+        plot.background = element_rect(fill = "#ebf2ff"),
+        legend.background = element_rect(fill = "#ebf2ff"),
+        plot.title = element_text(hjust = 0.5))+
+  geom_label_repel(data = total_sums_steps,
+                   aes(y = Steps, label = paste0(labels_overall_steps), fill = Steps), 
+                   size = 3.5, nudge_x = 0.4, show.legend = FALSE)+
+  ggtitle("Number of Participants Per Distance Type")
+
+
+
+
+
+
+
+##Pie Chart of minutes 'type'
+
+total_sums_mins = total_sums_daily %>% 
+  summarise(overall_vactive_mins = as.numeric(round(sum(sum_vactive_mins)/sum(sum_vactive_mins,
+                                                                       sum_factive_mins,
+                                                                       sum_lactive_mins,
+                                                                       sum_sedentary_mins),3)),
+            overall_mactive_mins = as.numeric(round(sum(sum_factive_mins)/sum(sum_vactive_mins,
+                                                                   sum_factive_mins,
+                                                                   sum_lactive_mins,
+                                                                   sum_sedentary_mins),3)),
+            overall_lactive_mins = as.numeric(round(sum(sum_lactive_mins)/sum(sum_vactive_mins,
+                                                                   sum_factive_mins,
+                                                                   sum_lactive_mins,
+                                                                   sum_sedentary_mins), 3)),
+            overall_sedentary_mins = as.numeric(round(sum(sum_sedentary_mins)/sum(sum_vactive_mins,
+                                                                                  sum_factive_mins,
+                                                                                  sum_lactive_mins,
+                                                                                  sum_sedentary_mins), 3)))
+
+
+#Make labels for pie chart
+labels_overall_mins = c("1.6% Very Active", "1.1% Fairly Active", "15.3% Lightly Active", "82% Sedentary")
+
+
+#Go from wide data to narrow data so we can make pie chart with ggplot
+total_sums_mins = t(total_sums_mins)
+
+#Add Column names to the transposed data frame 
+col_names_overall_mins = c("Mins")
+colnames(total_sums_mins) = col_names_overall_mins
+
+
+#PIE SLICES AS PERCENTAGES OF TOTAL
+ggplot(total_sums_mins, aes(x = "", y = Mins, fill = Mins)) +
+  geom_col(color = "black") +
+  coord_polar(theta = "y")+
+  theme(axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank(),
+        panel.background = element_rect(fill = "#ebf2ff"),
+        plot.background = element_rect(fill = "#ebf2ff"),
+        legend.background = element_rect(fill = "#ebf2ff"),
+        plot.title = element_text(hjust = 0.5))+
+  geom_label_repel(data = total_sums_mins,
+                   aes(y = Mins, label = paste0(labels_overall_mins), color = 'red'),
+                   size = 3.5, nudge_x = 0.4, show.legend = FALSE)+
+  ggtitle("Number of Participants Per Activity Minutes")
+
+
+
+We see most participants spend their daily time in Sedentary Minutes (82%) while out of all active minutes, 
+lightly active minutes are the most frequently observed daily. 
+
+
+
+
+Avg_Merged_Daily = Merged_Daily %>% 
+  group_by(Id) %>% 
+  summarise(
+    avg_total_steps = mean(TotalSteps),
+    avg_total_dist = mean(TotalDistance),
+    avg_sedentary = mean(SedentaryMinutes),
+    avg_calories = mean(Calories)
+  )
+
+#Histogram of avg daily distance
+ggplot(Avg_Merged_Daily ,aes(x = avg_total_dist))+
+  geom_histogram(binwidth = 2 ,fill = 'deepskyblue', color = 'black')+
+  theme_bw()+
+  ggtitle("Average Daily Distance Distribution")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("Average Daily Distance")
+
+#Histogram of avg daily steps
+ggplot(Avg_Merged_Daily ,aes(x = avg_total_steps))+
+  geom_histogram(binwidth = 2000 ,fill = 'deepskyblue2', color = 'black')+
+  theme_bw()+
+  ggtitle("Average Daily Steps Distribution")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("Average Daily Steps")
+
+#Histogram of avg daily sedentary Mins
+ggplot(Avg_Merged_Daily ,aes(x = avg_sedentary))+
+  geom_histogram(binwidth = 100 ,fill = 'deepskyblue3', color = 'black')+
+  theme_bw()+
+  ggtitle("Average Daily Sedentary Mins Distribution")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("Average Sedentary Mins")
+
+#Histogram of avg daily calories
+ggplot(Avg_Merged_Daily ,aes(x = avg_calories))+
+  geom_histogram(binwidth = 250 ,fill = 'deepskyblue4', color = 'black')+
+  theme_bw()+
+  ggtitle("Average Daily Calories Distribution")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("Average Daily Calories")
+
+
+
+
+
+In these histograms of daily metrics, we see:
+
+* Most participants traveled at from 5 - 7 km per day with a few outliers past 10km daily.  
+
+* Most participants took 7500 steps daily, with a clustered focused on the mean.
+
+* Average sedentary minutes formed a bimodal distribution with two clustered around 700 sedentary minutes and 1200. 
+
+* Average daily calories is positively skewed and clustered toward 2000 calories a day. 
+
+
+
+We can see that the majority of minutes are sedentary and lightly active, while fairly active/very active minutes make up only 2.6% of the daily time. 
+
+Additionally, in terms of distance, lightly active distance also makes up the wide majority of smart device users, 
+with moderately active coming close behind it and very active being at the bottom. 
+
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+
