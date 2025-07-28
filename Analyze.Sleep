@@ -1,0 +1,204 @@
+Sleep Data
+Here, we take a look at data during sleep hours so we can gain insight into how smart devices are being used during sleep. 
+By comparing and contrasting activity metrics and time/dates of usage, we can take a look at how our Id users are monitoring 
+their health while not actively conscious. 
+
+This can help provide information to how Bellabeat should design and orient product-goals to fit their consumer base's needs.  
+
+
+
+#Put the sleep labels next to the assigned sleep values for each state (asleep, restless, awake)
+Merged_Sleep = Merged_Sleep %>% 
+  mutate(sleep_state = cut(value, breaks = c(0,1,2,3), labels = c("asleep", "restless", "awake")))
+  
+hourly_state = Merged_Sleep %>% 
+  mutate(Hour = hour(mdy_hms(Merged_Sleep$date))) %>% 
+  group_by(Hour, value) %>% 
+  summarise(count_state = n()) %>% 
+  mutate(sleep_state = cut(value, breaks = c(0,1,2,3), labels = c("asleep", "restless", "awake")))
+
+
+#Plots each sleep state on the same line with different color plots
+ggplot(hourly_state, aes(x = Hour, y = count_state, color = sleep_state))+
+  geom_line()+
+  theme_bw()
+
+#facet counting each sleep state by the hour 
+ggplot(hourly_state, aes(x = Hour, y = count_state))+
+  geom_line()+
+  theme_bw()+
+  facet_grid(~sleep_state)
+
+
+
+The vast overwhelming amount of participants were asleep during the early hours from 8pm till 5am - with a spike of 
+restlessness around the early morning hours. 
+
+A quick point of clarification is that more data is needed on hours where participants are awake,
+since there is clear missing evidence in the middle of day hours where there are large volumes of gaps in the data,
+unexplained by the current frame.
+
+Sleep_detailed_May = read.csv("/kaggle/input/fitbit/mturkfitbit_export_4.12.16-5.12.16/Fitabase Data 4.12.16-5.12.16/sleepDay_merged.csv")
+
+#Plot of sleep logs by day of the week
+weekday_sleep_day = Sleep_detailed_May %>% 
+  rename(Date = SleepDay) %>% 
+  mutate(Date = as.Date(Date, format = "%m/%d/%Y"),
+         Weekday = weekdays(Date)) %>% 
+  group_by(Weekday) %>% 
+  summarise(sum_records = sum(TotalSleepRecords))
+
+
+weekday_sleep_day %>% 
+  mutate(Weekday = 
+           factor(Weekday, levels = c('Monday', 'Tuesday','Wednesday', 
+                                      'Thursday', 'Friday', 'Saturday','Sunday'))) %>%
+  ggplot(aes(x = Weekday, y = sum_records))+
+    geom_col(fill = 'deepskyblue')+
+    theme_bw()+
+    ggtitle("Sleep Records by weekday")+
+    theme(plot.title = element_text(hjust = 0.5))+
+    ylab("Number of sleep records")
+
+
+
+Sleep records are most highly concentrated during Tuesdays and Wednesdays, 
+as they dip later toward the weekend and reach their lowest point on Mondays. 
+
+
+
+#Plot of total time in bed by hour 
+weekday_sleep_bed = Sleep_detailed_May %>% 
+  rename(Date = SleepDay) %>% 
+  mutate(Date = as.Date(Date, format = "%m/%d/%Y"),
+         Weekday = weekdays(Date)) %>% 
+  group_by(Weekday) %>% 
+  summarise(sum_bed = sum(TotalTimeInBed))
+
+weekday_sleep_bed %>% 
+  mutate(Weekday = 
+           factor(Weekday, levels = c('Monday', 'Tuesday','Wednesday', 
+                                      'Thursday', 'Friday', 'Saturday','Sunday'))) %>% 
+  ggplot(aes(x = Weekday, y = sum_bed))+
+    geom_col(fill = 'deepskyblue3')+
+    theme_bw()+
+    ggtitle("Minutes in bed by weekday")+
+    theme(plot.title = element_text(hjust = 0.5))+
+    ylab("Total minutes in bed")
+
+
+
+
+The total minutes in bed almost mirror the total sleep records data that exist. 
+The lowest point occurs during Mondays and the peak happens in the middle of the week. 
+
+An important point to note however is that more data for March-April is needed, as this detailed sleep record only 
+consists of data during April-May.
+
+
+#Plot of total minutes asleep 
+weekday_asleep_mins = Sleep_detailed_May %>% 
+  rename(Date = SleepDay) %>% 
+  mutate(Date = as.Date(Date, format = "%m/%d/%Y"),
+         Weekday = weekdays(Date)) %>% 
+  group_by(Weekday) %>% 
+  summarise(sum_asleep = sum(TotalMinutesAsleep))
+
+
+weekday_asleep_mins %>% 
+  mutate(Weekday = 
+           factor(Weekday, levels = c('Monday', 'Tuesday','Wednesday', 
+                                      'Thursday', 'Friday', 'Saturday','Sunday'))) %>% 
+  ggplot(aes(x = Weekday, y = sum_asleep))+
+  geom_col(fill = 'dodgerblue4')+ 
+  theme_bw()+
+  ggtitle("Minutes Asleep by weekday")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("Minutes Asleep")
+
+
+Finally, as discussed above - the minutes of sleep records also almost mimic the two charts mentioned prior. 
+Corroboration for the lack of sleep that participants are getting Friday-Monday compared to Tuesday-Thursday. 
+
+
+
+--------------------------------------------------------------------------------------------------------------------
+Sleep Data Merged With Daily Activity
+
+#Merge Sleep and daily activity by id and date 
+daily_activity_sleep = merge(Merged_Daily, Sleep_detailed_May, by = c("Id"))
+
+#Mutate two new coluns for sedentary hours and sleep hours 
+daily_activity_sleep = daily_activity_sleep %>% 
+  mutate(
+    SedentaryHours = round(SedentaryMinutes/60, 2),
+    TotalHoursAsleep = round(TotalMinutesAsleep/60, 2)
+  )
+
+
+
+
+#linegraph column sedentary
+linegraph_sedentary = daily_activity_sleep %>% 
+  select(ActivityDate, SedentaryHours) %>% 
+  mutate(Label = cut(SedentaryHours, breaks = c(-1000, 1000), labels = c("Sedentary")))
+
+colnames(linegraph_sedentary)[2] = "Hours"
+#linegraph column asleep
+linegraph_asleep = daily_activity_sleep %>% 
+  select(ActivityDate, TotalHoursAsleep) %>% 
+  mutate(Label = cut(TotalHoursAsleep, breaks = c(-1000, 10000), labels = c("Asleep")))
+
+colnames(linegraph_asleep)[2] = "Hours"
+
+#Merge both linegraph data sets 
+merged_linegraph= rbind(linegraph_asleep, linegraph_sedentary)
+
+
+
+#Format the activity time column to month and day and plot the area graph
+merged_linegraph %>% 
+  mutate(yearday = yday(mdy(merged_linegraph$ActivityDate))) %>% 
+  ggplot(aes(x = yearday, y = Hours, fill = Label))+
+    geom_area(alpha = 0.5, size = 0.5, colour = "black")+
+    theme_bw()+
+    xlab("Day of the Year")+
+    ggtitle("Hours of sedentary and asleep activity")+
+    theme(plot.title = element_text(hjust = 0.5),
+         aspect.ratio = 0.5)
+
+
+
+
+
+The only important factoid to note about this area graph is that the vast majority of activity for both sedentary and asleep 
+is sedentary - with both factors experiencing declines and increments at the same time of the year, 
+following the same trends. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
