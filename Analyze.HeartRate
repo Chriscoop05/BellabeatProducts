@@ -1,0 +1,71 @@
+### Heart Rate Data 
+Let's move onto a new section that observes trends in the heartrate data measured on the fitbit devices. 
+This should supplement the already existing work-out data that we have collected and help us collect further 
+insight into when and what is associated with a higher heart rate. 
+
+With insight from this section, Bellabeat should be able to learn additional patterns and trends as to what activities 
+are correlated with a higher heart rate and when these hours are. In return, the marketing team can design products and
+work on software to help monitor and nudge members to improve/work on their health goals. 
+
+
+#Hourly Plot of heart rate 
+Merged_HRate %>% 
+  mutate(Hour = hour(mdy_hms(Merged_HRate$Time))) %>% 
+  group_by(Hour) %>% 
+  summarise(avg_rate = mean(Value)) %>% 
+  ggplot(aes(x = Hour, y = avg_rate))+
+  geom_line()+
+  theme_bw()
+
+This plot of heart rate shows a continous rise from 5am until 12pm, where it stagnates until 3pm. 
+It starts rising again until 6pm, to which it subsequently plummets. 
+
+
+#Weekday plot of heart rate 
+
+weekday_hrate = Merged_HRate %>% 
+  rename(Date = Time) %>% 
+  mutate(Date = as.Date(Date, format = "%m/%d/%Y"),
+         Weekday = weekdays(Date)) %>% 
+  group_by(Weekday) %>% 
+  summarise(avg_rate = mean(Value))
+
+#Plot without scale y axis
+weekday_hrate %>% 
+  mutate(Weekday = 
+           factor(Weekday, levels = c('Monday', 'Tuesday','Wednesday', 
+                                      'Thursday', 'Friday', 'Saturday','Sunday'))) %>% 
+  ggplot(aes(x = Weekday, y = avg_rate))+
+  geom_col(fill = 'brown4')+
+  theme_bw()+
+  ggtitle("Average heart rate by weekday") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+#plot with scale
+weekday_hrate %>% 
+  mutate(Weekday = 
+           factor(Weekday, levels = c('Monday', 'Tuesday','Wednesday', 
+                                      'Thursday', 'Friday', 'Saturday','Sunday'))) %>% 
+  ggplot(aes(x = Weekday, y = avg_rate))+
+  geom_col(fill = 'brown4')+
+  theme_bw()+
+  ggtitle("Average heart rate by weekday") +
+  theme(plot.title = element_text(hjust = 0.5))+
+  coord_cartesian(ylim = c(60,85))
+
+#Plots average heart rate for each day throughout the two month span 
+Merged_HRate %>% 
+  rename(Date = Time) %>% 
+  mutate(Date = as.Date(Date, format = "%m/%d/%Y")) %>%
+  group_by(Date) %>% 
+  summarise(avg_rate = mean(Value)) %>% 
+  ggplot(aes(x = Date, y = avg_rate))+
+    geom_line()+
+    theme_bw()
+
+We can see here heart rate shows spikes in activity from Friday to Saturday and has low activity in the early week from Sunday to Monday. Additionally, 
+activity spiked during early April and continuously decreased throughout the month until the start of the new one. 
+
+
+
+
