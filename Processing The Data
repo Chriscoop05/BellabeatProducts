@@ -1,0 +1,100 @@
+Processing the Data
+
+library(tidyverse)
+library(scales)
+library(ggrepel)
+library(readr)
+
+
+
+#Read the CSV files for daily activity in both months
+dailyActivity_April = read.csv("/kaggle/input/fitbit/mturkfitbit_export_3.12.16-4.11.16/Fitabase Data 3.12.16-4.11.16/dailyActivity_merged.csv")
+dailyActivity_May = read.csv("/kaggle/input/fitbit/mturkfitbit_export_4.12.16-5.12.16/Fitabase Data 4.12.16-5.12.16/dailyActivity_merged.csv")
+#Merge April and May datasets into one using rbind
+Merged_Daily = rbind(dailyActivity_April,dailyActivity_May)
+
+#Read the CSV for Hourly Calorie Data 
+hourlyCalories_April = read.csv("/kaggle/input/fitbit/mturkfitbit_export_3.12.16-4.11.16/Fitabase Data 3.12.16-4.11.16/hourlyCalories_merged.csv")
+hourlyCalories_May = read.csv("/kaggle/input/fitbit/mturkfitbit_export_4.12.16-5.12.16/Fitabase Data 4.12.16-5.12.16/hourlyCalories_merged.csv")
+#Merge april and May datasets using rbind
+Merged_HourCal  = rbind(hourlyCalories_April, hourlyCalories_May)
+
+
+#Read the CSV for Minute Sleep Data
+minuteSleep_April = read.csv("/kaggle/input/fitbit/mturkfitbit_export_3.12.16-4.11.16/Fitabase Data 3.12.16-4.11.16/minuteSleep_merged.csv")
+minuteSleep_May = read.csv("/kaggle/input/fitbit/mturkfitbit_export_4.12.16-5.12.16/Fitabase Data 4.12.16-5.12.16/minuteSleep_merged.csv")
+#Merge April and May datasets using rbind 
+Merged_Sleep = rbind(minuteSleep_April, minuteSleep_May)
+
+
+
+#Read the CSV for Minute Sleep Data
+minuteSleep_April = read.csv("/kaggle/input/fitbit/mturkfitbit_export_3.12.16-4.11.16/Fitabase Data 3.12.16-4.11.16/minuteSleep_merged.csv")
+minuteSleep_May = read.csv("/kaggle/input/fitbit/mturkfitbit_export_4.12.16-5.12.16/Fitabase Data 4.12.16-5.12.16/minuteSleep_merged.csv")
+#Merge April and May datasets using rbind 
+Merged_Sleep = rbind(minuteSleep_April, minuteSleep_May)
+
+
+#Read the CSV for Minute Heartrate Data
+heartrate_April = read.csv("/kaggle/input/fitbit/mturkfitbit_export_3.12.16-4.11.16/Fitabase Data 3.12.16-4.11.16/heartrate_seconds_merged.csv")
+heartrate_May = read.csv("/kaggle/input/fitbit/mturkfitbit_export_4.12.16-5.12.16/Fitabase Data 4.12.16-5.12.16/heartrate_seconds_merged.csv")
+#Merge April and May datasets using rbind
+Merged_HRate  = rbind(heartrate_April, heartrate_May)
+
+
+#Read the CSV for Minute Heartrate Data
+heartrate_April = read.csv("/kaggle/input/fitbit/mturkfitbit_export_3.12.16-4.11.16/Fitabase Data 3.12.16-4.11.16/heartrate_seconds_merged.csv")
+heartrate_May = read.csv("/kaggle/input/fitbit/mturkfitbit_export_4.12.16-5.12.16/Fitabase Data 4.12.16-5.12.16/heartrate_seconds_merged.csv")
+#Merge April and May datasets using rbind
+Merged_HRate  = rbind(heartrate_April, heartrate_May)
+
+
+
+
+-----------------------------------------------------------------------------------------------------------------------
+
+Remove Duplicates
+
+#Remove all duplicates 
+sum(duplicated(Merged_Daily))
+sum(duplicated(Merged_HourCal))
+sum(duplicated(Merged_HRate))
+sum(duplicated(Merged_Sleep))
+sum(duplicated(Merged_Weight))
+sum(duplicated(Merged_intensity))
+
+Merged_Daily = Merged_Daily %>% 
+  distinct() %>% 
+  drop_na()
+
+Merged_HourCal = Merged_HourCal %>% 
+  distinct() %>% 
+  drop_na()
+
+Merged_HRate = Merged_HRate %>% 
+  distinct() %>% 
+  drop_na()
+
+Merged_Sleep = Merged_Sleep %>% 
+  distinct() %>% 
+  drop_na()
+
+Merged_Weight = Merged_Weight %>% 
+  distinct() %>% 
+  drop_na()
+
+Merged_intensity = Merged_intensity %>%
+  distinct() %>%
+  drop_na()
+
+
+
+
+
+
+
+
+
+
+
+
