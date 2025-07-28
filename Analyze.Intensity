@@ -1,0 +1,82 @@
+Intensity Data
+
+Exploring intensity data will gain Bellabeat further insight into the specific activity minutes that their consumer base
+is spending their time with the device on with and how their workout hours distributed. 
+
+This provides the team with more data in product design to reach the needs of smart device users who aim to improve their
+health through our products.
+
+
+Merged_intensity = Merged_intensity %>% 
+  mutate(intensity_state = cut(Intensity, breaks = c(-1,0,1,2,3), labels = c("Sedentary", "Light", "Moderate", "Very Active")))
+
+hourly_intensity = Merged_intensity %>% 
+  mutate(Hour = hour(mdy_hms(Merged_intensity$ActivityMinute)),
+         intensity_state = 
+                  cut(Intensity, 
+                      breaks = c(-1,0,1,2,3), 
+                      labels = c("Sedentary", "Light", "Moderate", "Very Active"))) %>% 
+  group_by(Hour, intensity_state) %>% 
+  summarise(count_state = n())
+
+
+
+#Plot of all types of intensities by hour 
+ggplot(hourly_intensity, aes(x = Hour, y = count_state, color = intensity_state))+
+  geom_line()+
+  theme_bw()
+
+#plot of all types of intensities by hour with facet 
+ggplot(hourly_intensity, aes(x = Hour, y = count_state))+
+  geom_line()+
+  facet_grid(~intensity_state)+
+  theme_bw()
+
+
+
+#Plot of moderate and very active intensity 
+hourly_intensity %>% 
+  filter(intensity_state == "Moderate" | intensity_state == "Very Active") %>% 
+  ggplot(aes(x = Hour, y = count_state))+
+  geom_line()+
+  theme_bw()+
+  ggtitle("Moderate/Very Active Intensity by hour")+
+  theme(plot.title = element_text(hjust = 0.5))+
+  ylab("Intensity minutes")
+
+
+Intensity minutes clearly spike up starting at 5am and proceed to gradually rise until 8pm - with numerous dips in between - 
+until it plummets back down during the night after 8. 
+
+
+The most commonly observed satte of intensity was sedentary - which is more so defined for its lack thereof; 
+sedentary is followed by light intensity - to which moderate and very active hours are seen far less frequently than. 
+
+Sedentary hours plummet after 5am throughout the day and rise again after 8pm. 
+The opposite is observed for all other active intensity states - a rise after 5am and drop after 8pm, though with a minor drop
+during the 12pm-2pm hours. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
